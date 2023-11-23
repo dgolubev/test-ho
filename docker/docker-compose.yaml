@@ -1,0 +1,22 @@
+version: "3.3"
+
+networks:
+  internal:
+
+services:
+  app-api:
+    container_name: ho-api
+    build:
+      context: ../api
+    image: test-ho-api
+    ports:
+      - 3000:3000
+    volumes:
+      - /app/build
+      - /app/node_modules
+      - ../api:/app
+    env_file:
+      - ../api/.env
+    networks:
+      - internal
+    command: "npm run start"
