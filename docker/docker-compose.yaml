@@ -12,11 +12,11 @@ services:
     ports:
       - 3000:3000
     volumes:
-      - /app/build
+      - /app/dist
       - /app/node_modules
       - ../api:/app
     env_file:
       - ../api/.env
     networks:
       - internal
-    command: "npm run start"
+    command: "npm run start:dev"
