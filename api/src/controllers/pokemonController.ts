@@ -5,6 +5,7 @@ import {
   Response,
 } from 'express';
 import pokemonApiService, { PokemonApiService } from '../services/pokemonApi';
+import { PokemonEvolutionChainBranch } from '@app/models/Pokemon';
 
 export interface PokemonController {
   getEvolutionChain: RequestHandler;
@@ -25,9 +26,23 @@ export const PokemonControllerFactory = (
   ): Promise<void> => {
     const name = req.params['name'];
 
-    const response = pokemonApi.getEvolutionChain(name);
+    try {
+      const mainBranch = (await pokemonApi.getEvolutionChain(name)).chain;
 
-    res.send(response);
+      const formatChain = (branch: PokemonEvolutionChainBranch): {} => {
+        const variations = branch.evolves_to
+          .map(variation => formatChain(variation));
+
+        return {
+          name: branch.species.name,
+          variations: variations,
+        }
+      }
+
+      res.json(formatChain(mainBranch));
+    }catch (e) {
+      res.json({});
+    }
   };
 
   return {

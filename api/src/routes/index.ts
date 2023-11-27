@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import homeController from '../controllers/homeController';
-import pokemonController from '../controllers/pokemonController';
+import homeController from '@app/controllers/homeController';
+import pokemonController from '@app/controllers/pokemonController';
 
 export class Routes {
   static readonly HOME: string = '/';

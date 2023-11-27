@@ -1,4 +1,6 @@
 export const  PokemonApiRoutes = {
-  SPECIES: '/pokemon-species/:name',
-  EVOLUTION_CHAIN: '/evolution-chain/:number',
+  // /pokemon-species/:name',
+  SPECIES: '/pokemon-species/',
+  // '/evolution-chain/:number',
+  // EVOLUTION_CHAIN: '/evolution-chain/',
 }

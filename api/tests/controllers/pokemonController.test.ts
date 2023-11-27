@@ -1,3 +1,5 @@
+global.fetch = jest.fn();
+
 import {
   Request,
   Response,
@@ -7,8 +9,10 @@ import {
   PokemonControllerFactory,
 } from '@app/controllers/pokemonController';
 import { PokemonApiService } from '@app/services/pokemonApi';
-
-// const mockPokemonApiService = jest.fn({});
+import {
+  PokemonEvolutionChain,
+  PokemonEvolutionChainBranch,
+} from '@app/models/Pokemon';
 
 describe('Pokemon Controller', () => {
   let sut: PokemonController;
@@ -26,28 +30,111 @@ describe('Pokemon Controller', () => {
     sut = PokemonControllerFactory(
       {
         getEvolutionChain: mockGetEvolutionChain,
-        getSpecies: jest.fn(),
-      } as PokemonApiService,
+      } as unknown as PokemonApiService,
     );
   });
 
   describe('getEvolutionChain', () => {
-    it('success', () => {
+    it('success', async () => {
+      //  predefine mocks
       mockReq.params = {
         name: 'dummyName',
       };
-      mockRes.send = jest.fn();
+      mockRes.json = jest.fn();
 
-      const expectResponse = 'expectResponse';
+      const branchAB = {
+        species: {
+          name: 'branchAB',
+        },
+        evolves_to: [] as PokemonEvolutionChainBranch[],
+      } as PokemonEvolutionChainBranch;
 
-      mockGetEvolutionChain.mockImplementationOnce(() => expectResponse);
+      const branchAC = {
+        species: {
+          name: 'branchAC',
+        },
+        evolves_to: [] as PokemonEvolutionChainBranch[],
+      } as PokemonEvolutionChainBranch;
 
-      sut.getEvolutionChain(mockReq, mockRes, mockNext);
+      const branchA = {
+        species: {
+          name: 'branchA',
+        },
+        evolves_to: [
+          branchAB,
+          branchAC,
+        ],
+      } as PokemonEvolutionChainBranch
 
-      expect(mockRes.send).toBeCalledWith(expectResponse);
+      const branchB = {
+        species: {
+          name: 'branchB',
+        },
+        evolves_to: [] as PokemonEvolutionChainBranch[],
+      } as PokemonEvolutionChainBranch;
+
+      const expectResponse = {
+        species: {
+          name: 'branchMain',
+        },
+        evolves_to: [
+          branchA,
+          branchB,
+        ],
+      } as PokemonEvolutionChainBranch;
+
+      mockGetEvolutionChain.mockImplementationOnce(() => ({
+        chain : expectResponse
+      } as PokemonEvolutionChain));
+
+      //  call
+      await sut.getEvolutionChain(mockReq, mockRes, mockNext);
+
+      //  validate
+      expect(mockRes.json).toBeCalledTimes(1);
+      expect(mockRes.json).toBeCalledWith({
+        name: 'branchMain',
+        variations: [
+          {
+            name: branchA.species.name,
+            variations: [
+              {
+                name: branchAB.species.name,
+                variations: [],
+              },
+              {
+                name: branchAC.species.name,
+                variations: [],
+              },
+            ],
+          },
+          {
+            name: branchB.species.name,
+            variations: [],
+          },
+        ],
+      });
 
       expect(mockGetEvolutionChain).toBeCalledTimes(1);
-      expect(mockGetEvolutionChain).toBeCalledWith( mockReq.params.name);
+      expect(mockGetEvolutionChain).toBeCalledWith(mockReq.params.name);
+    });
+
+    it('failure', async () => {
+      //  predefine mocks
+      mockReq.params = {
+        name: 'dummyName',
+      };
+      mockRes.json = jest.fn();
+
+      const expectError = new Error('dummy error');
+      mockGetEvolutionChain.mockRejectedValueOnce(expectError);
+
+      //  call
+      await sut.getEvolutionChain(mockReq, mockRes, mockNext);
+
+      //  validate
+      expect(mockRes.json).toBeCalledTimes(1);
+      expect(mockRes.json).toBeCalledWith({});
     });
   });
 });
